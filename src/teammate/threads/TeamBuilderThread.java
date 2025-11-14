@@ -11,10 +11,12 @@ public class TeamBuilderThread extends Thread {
     private List<Participant> participants;
     private int teamSize;
     private List<Team> result;
+    private TeamBuilder builder;
 
-    public TeamBuilderThread(List<Participant> participants, int teamSize) {
+    public TeamBuilderThread(List<Participant> participants, int teamSize, TeamBuilder builder) {
         this.participants = participants;
         this.teamSize = teamSize;
+        this.builder = builder;
     }
 
     public List<Team> getResult() {
@@ -23,9 +25,7 @@ public class TeamBuilderThread extends Thread {
 
     @Override
     public void run() {
-        TeamBuilder builder = new TeamBuilder();
-        result = builder.formTeams(participants, teamSize);
-
-        System.out.println("Team formation completed.");
+        result = builder.formBalancedTeams(participants, teamSize);
+        System.out.println("Team formation completed (thread).");
     }
 }
