@@ -1,7 +1,7 @@
 package teammate.threads;
 
-import teammate.models.Team;
 import teammate.models.Participant;
+import teammate.models.Team;
 import teammate.services.TeamBuilder;
 
 import java.util.List;
@@ -26,6 +26,5 @@ public class TeamBuilderThread extends Thread {
     @Override
     public void run() {
         result = builder.formBalancedTeams(participants, teamSize);
-        System.out.println("Team formation completed (thread).");
     }
 }
