@@ -7,7 +7,13 @@ import java.util.*;
 
 public class TeamBuilder {
 
-    public List<Team> formBalancedTeams(List<Participant> participants, int teamSize) {
+    public Map<String, Object> formTeamsWithLeftovers(List<Participant> participants, int teamSize) {
+
+        // RESULT MAP
+        Map<String, Object> result = new HashMap<>();
+
+        // LEFTOVER LIST
+        List<Participant> leftover = new ArrayList<>();
 
         // ---- Step 1: Separate by personality ----
         List<Participant> leaders = new ArrayList<>();
@@ -32,52 +38,55 @@ public class TeamBuilder {
         Collections.shuffle(thinkers);
         Collections.shuffle(balanced);
 
-        // ---- Step 3: Create empty teams ----
-        int totalTeams = (int) Math.ceil((double) participants.size() / teamSize);
-        List<Team> teams = new ArrayList<>();
+        // ---- Step 3: Calculate total FULL teams ----
+        int fullTeams = participants.size() / teamSize;
 
-        for (int i = 0; i < totalTeams; i++) {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 0; i < fullTeams; i++) {
             teams.add(new Team());
         }
 
         // ---- Step 4: Assign ONE leader per team ----
-        for (int i = 0; i < totalTeams && i < leaders.size(); i++) {
+        for (int i = 0; i < fullTeams && i < leaders.size(); i++) {
             teams.get(i).addMember(leaders.get(i));
         }
 
         // ---- Step 5: Assign ONE thinker per team ----
-        for (int i = 0; i < totalTeams && i < thinkers.size(); i++) {
+        for (int i = 0; i < fullTeams && i < thinkers.size(); i++) {
             teams.get(i).addMember(thinkers.get(i));
         }
 
-        // ---- Step 6: Fill remaining slots with Balanced type ----
+        // ---- Step 6: Collect remaining participants ----
         List<Participant> remaining = new ArrayList<>();
         remaining.addAll(balanced);
 
-        // Add extra thinkers (if any)
-        if (thinkers.size() > totalTeams) {
-            remaining.addAll(thinkers.subList(totalTeams, thinkers.size()));
-        }
+        if (thinkers.size() > fullTeams)
+            remaining.addAll(thinkers.subList(fullTeams, thinkers.size()));
 
-        // Add extra leaders (if any)
-        if (leaders.size() > totalTeams) {
-            remaining.addAll(leaders.subList(totalTeams, leaders.size()));
-        }
+        if (leaders.size() > fullTeams)
+            remaining.addAll(leaders.subList(fullTeams, leaders.size()));
 
-        // Shuffle remaining for fairness
         Collections.shuffle(remaining);
 
-        // ---- Step 7: Now apply role + game balancing constraints ----
+        // ---- Step 7: Fill teams EXACTLY to team size ----
         for (Participant p : remaining) {
             Team bestTeam = getBestTeamForParticipant(teams, p, teamSize);
-            bestTeam.addMember(p);
+
+            if (bestTeam != null) {
+                bestTeam.addMember(p);
+            } else {
+                leftover.add(p); // If all teams are full, add to leftover
+            }
         }
 
-        return teams;
+        // Store results
+        result.put("teams", teams);
+        result.put("leftover", leftover);
+
+        return result;
     }
 
 
-    // Method to choose best team for the participant based on constraints
     private Team getBestTeamForParticipant(List<Team> teams, Participant p, int teamSize) {
 
         Team best = null;
@@ -97,35 +106,25 @@ public class TeamBuilder {
         return best;
     }
 
-    // Lower score = better fit
     private int evaluateTeamFit(Team t, Participant p) {
 
         int score = 0;
 
-        // --- Game diversity: penalize if too many same game ---
         long sameGameCount = t.getMembers().stream()
                 .filter(m -> m.getGame().equalsIgnoreCase(p.getGame()))
                 .count();
+        if (sameGameCount >= 2) score += 5;
 
-        if (sameGameCount >= 2)
-            score += 5;
-
-        // --- Role diversity ---
         boolean roleExists = t.getMembers().stream()
                 .anyMatch(m -> m.getRole().equalsIgnoreCase(p.getRole()));
+        if (roleExists) score += 3;
 
-        if (roleExists)
-            score += 3;
-
-        // --- Personality balance ---
         long leaders = t.getMembers().stream()
                 .filter(m -> m.getPersonalityType().equals("Leader"))
                 .count();
-
         if (leaders >= 1 && p.getPersonalityType().equals("Leader"))
             score += 6;
 
-        // --- Skill balancing: penalize if average differs too much ---
         int avgSkill = (int) t.getMembers().stream()
                 .mapToInt(Participant::getSkillLevel)
                 .average()

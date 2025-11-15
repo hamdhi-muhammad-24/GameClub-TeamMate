@@ -4,7 +4,6 @@ import teammate.models.Participant;
 import teammate.models.Team;
 import teammate.services.CSVHandler;
 import teammate.services.TeamBuilder;
-import teammate.services.PersonalityClassifier;
 import teammate.threads.TeamBuilderThread;
 import teammate.threads.SurveyProcessorThread;
 import teammate.exceptions.InvalidDataException;
@@ -29,18 +28,16 @@ public class Main {
 
             CSVHandler handler = new CSVHandler();
 
-            System.out.println("\nLoading participants from CSV...");
+            System.out.println("\nLoading participants...");
             List<Participant> participants =
                     handler.loadParticipants("Resources/participants_sample.csv");
 
-            System.out.println("✔ " + participants.size() + " participants loaded.");
+            System.out.println("✔ Loaded " + participants.size() + " participants.");
 
             // Thread 1 — Personality classification
             SurveyProcessorThread t1 = new SurveyProcessorThread(participants);
             t1.start();
             t1.join();
-
-            System.out.println("✔ Personality classification completed.");
 
             // Thread 2 — Team building
             TeamBuilder builder = new TeamBuilder();
@@ -48,9 +45,10 @@ public class Main {
             t2.start();
             t2.join();
 
-            List<Team> teams = t2.getResult();
+            List<Team> teams = t2.getTeams();
+            List<Participant> leftover = t2.getLeftover();
 
-            System.out.println("\n=========== Final Teams ===========\n");
+            System.out.println("\n=========== FULL TEAMS ===========\n");
             int num = 1;
             for (Team t : teams) {
                 System.out.println("Team " + num++);
@@ -58,8 +56,17 @@ public class Main {
                 System.out.println();
             }
 
+            // Print leftover
+            System.out.println("\n=========== UNASSIGNED PARTICIPANTS ===========\n");
+            if (leftover.isEmpty()) {
+                System.out.println("None — all participants assigned to teams.");
+            } else {
+                leftover.forEach(p -> System.out.println(" - " + p));
+            }
+
+            // Save only full teams
             handler.saveTeams(teams, "formed_teams.csv");
-            System.out.println("✔ Teams saved to formed_teams.csv");
+            System.out.println("\n✔ Saved full teams to formed_teams.csv");
 
         } catch (InvalidDataException e) {
             System.out.println("❌ Invalid Data: " + e.getMessage());
@@ -69,6 +76,7 @@ public class Main {
             System.out.println("❌ Thread Error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("❌ Unexpected Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
