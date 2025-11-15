@@ -65,7 +65,7 @@ public class Main {
             }
 
             // Save only full teams
-            handler.saveTeams(teams, "formed_teams.csv");
+            handler.saveTeams(teams, "Resources/formed_teams.csv");
             System.out.println("\n✔ Saved full teams to formed_teams.csv");
 
         } catch (InvalidDataException e) {
