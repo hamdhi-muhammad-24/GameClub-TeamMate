@@ -4,7 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Team {
+
     private List<Participant> members = new ArrayList<>();
+
+    /** Default constructor */
+    public Team() {
+        this.members = new ArrayList<>();
+    }
+
+    /** New constructor to create a team from a list of participants */
+    public Team(List<Participant> members) {
+        this.members = new ArrayList<>(members);
+    }
 
     public void addMember(Participant p) {
         members.add(p);
