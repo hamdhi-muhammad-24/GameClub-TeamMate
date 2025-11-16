@@ -35,54 +35,57 @@ public class TeamBuilder {
         Collections.shuffle(thinkers);
         Collections.shuffle(balanced);
 
-        // STEP 2: Determine number of full teams
-        int fullTeams = participants.size() / teamSize;
+        // STEP 2: Determine number of FULL teams only
+        int fullTeams = participants.size() / teamSize;  // EXACT teams only
         List<Team> teams = new ArrayList<>();
 
         for (int i = 0; i < fullTeams; i++) {
             teams.add(new Team());
         }
 
-        // STEP 3: Assign exactly one Leader per team
+        // STEP 3: Assign EXACTLY 1 Leader per team
         for (int i = 0; i < fullTeams; i++) {
             if (i < leaders.size()) {
                 teams.get(i).addMember(leaders.get(i));
             }
         }
 
-        // Extra Leaders go to leftover
+        // Extra leaders ALWAYS leftover
         if (leaders.size() > fullTeams) {
             leftover.addAll(leaders.subList(fullTeams, leaders.size()));
         }
 
-        // STEP 4: Assign 1 Thinker first
+        // STEP 4: Assign 1 Thinker per team
         for (int i = 0; i < fullTeams; i++) {
             if (i < thinkers.size()) {
                 teams.get(i).addMember(thinkers.get(i));
             }
         }
 
-        // STEP 5: Add remaining Thinkers (strict max 2)
+        // STEP 5: Extra thinkers (max 2 per team)
         List<Participant> remainingThinkers = new ArrayList<>();
         if (thinkers.size() > fullTeams) {
             remainingThinkers.addAll(thinkers.subList(fullTeams, thinkers.size()));
         }
 
         Collections.shuffle(remainingThinkers);
-
         for (Participant th : remainingThinkers) {
+
             boolean placed = false;
             for (Team t : teams) {
-                if (countThinkers(t) < MAX_THINKERS && t.getMembers().size() < teamSize) {
-                    t.addMember(th);
-                    placed = true;
-                    break;
-                }
+
+                if (t.getMembers().size() >= teamSize) continue;               // Full
+                if (countThinkers(t) >= MAX_THINKERS) continue;               // Too many thinkers
+
+                t.addMember(th);
+                placed = true;
+                break;
             }
+
             if (!placed) leftover.add(th);
         }
 
-        // STEP 6: Add Balanced participants & enforce constraints
+        // STEP 6: Add Balanced + other remaining participants
         List<Participant> remaining = new ArrayList<>(balanced);
         Collections.shuffle(remaining);
 
@@ -91,29 +94,43 @@ public class TeamBuilder {
             if (team != null) {
                 team.addMember(p);
             } else {
-                leftover.add(p);
+                leftover.add(p);  // Strict: leftover only, NO partial team creation
             }
         }
 
-        // STEP 7: Final pass for role diversity
-        enforceMinimumRoleDiversity(teams, leftover);
+        // STEP 7: Fix role diversity (without creating partial teams)
+        enforceMinimumRoleDiversity(teams, leftover, teamSize);
 
+        // STEP 8: FINAL — REMOVE ANY INCOMPLETE TEAMS (should not exist)
+        // But just in case, we protect assignment validity:
+        for (Iterator<Team> it = teams.iterator(); it.hasNext(); ) {
+            Team t = it.next();
+            if (t.getMembers().size() < teamSize) {
+                leftover.addAll(t.getMembers());
+                it.remove();
+            }
+        }
+
+        // Return guaranteed-correct data
         result.put("teams", teams);
         result.put("leftover", leftover);
-
         return result;
     }
 
-    // ---------------- VALID TEAM CHECK ----------------
+
+    // =============================================================
+    //                  VALID TEAM CHECK
+    // =============================================================
 
     private Team findValidTeam(Participant p, List<Team> teams, int teamSize) {
+
         Team best = null;
         int bestScore = Integer.MAX_VALUE;
 
         for (Team t : teams) {
 
             if (t.getMembers().size() >= teamSize)
-                continue;
+                continue; // cannot add, team is full
 
             if (isLeader(p) && countLeaders(t) >= REQUIRED_LEADERS)
                 continue;
@@ -144,17 +161,53 @@ public class TeamBuilder {
         return p.getPersonalityType().equals("Thinker");
     }
 
-    // ---------------- ROLE DIVERSITY ----------------
+    // =============================================================
+    //               ROLE DIVERSITY ENFORCEMENT
+    // =============================================================
 
     private boolean helpsRoleDiversity(Team t, Participant p) {
         Set<String> roles = new HashSet<>();
         for (Participant m : t.getMembers()) roles.add(m.getRole());
 
+        // Already 3+ roles → allow
         if (roles.size() >= MIN_ROLES) return true;
+
+        // Need a new role to increase diversity
         return !roles.contains(p.getRole());
     }
 
-    // ---------------- COUNT HELPERS ----------------
+    private void enforceMinimumRoleDiversity(List<Team> teams, List<Participant> leftover, int teamSize) {
+
+        for (Team t : teams) {
+
+            if (t.getMembers().size() == teamSize) {
+
+                Set<String> roles = new HashSet<>();
+                for (Participant m : t.getMembers()) roles.add(m.getRole());
+
+                if (roles.size() < MIN_ROLES) {
+                    Iterator<Participant> it = leftover.iterator();
+
+                    while (it.hasNext() && roles.size() < MIN_ROLES) {
+                        Participant p = it.next();
+
+                        if (!roles.contains(p.getRole())
+                                && t.getMembers().size() < teamSize) {
+
+                            t.addMember(p);
+                            roles.add(p.getRole());
+                            it.remove();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    // =============================================================
+    //                     COUNT HELPERS
+    // =============================================================
 
     private int countLeaders(Team t) {
         return (int) t.getMembers().stream()
@@ -174,33 +227,14 @@ public class TeamBuilder {
                 .count();
     }
 
-    // ---------------- SKILL BALANCE ----------------
+    // =============================================================
+    //                     SKILL BALANCING
+    // =============================================================
 
     private int evaluateSkillFit(Team t, Participant p) {
         int avg = (int) t.getMembers().stream()
                 .mapToInt(Participant::getSkillLevel)
                 .average().orElse(50);
         return Math.abs(avg - p.getSkillLevel()) / 5;
-    }
-
-    // ---------------- FIX ROLE DIVERSITY IF NEEDED ----------------
-
-    private void enforceMinimumRoleDiversity(List<Team> teams, List<Participant> leftover) {
-        for (Team t : teams) {
-            Set<String> roles = new HashSet<>();
-            for (Participant m : t.getMembers()) roles.add(m.getRole());
-
-            if (roles.size() < MIN_ROLES) {
-                Iterator<Participant> itr = leftover.iterator();
-                while (itr.hasNext() && roles.size() < MIN_ROLES) {
-                    Participant p = itr.next();
-                    if (!roles.contains(p.getRole())) {
-                        t.addMember(p);
-                        roles.add(p.getRole());
-                        itr.remove();
-                    }
-                }
-            }
-        }
     }
 }
