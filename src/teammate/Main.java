@@ -9,74 +9,216 @@ import teammate.threads.SurveyProcessorThread;
 import teammate.exceptions.InvalidDataException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
+    private static List<Participant> participants = new ArrayList<>();
+    private static List<Team> teams = new ArrayList<>();
+    private static List<Participant> leftover = new ArrayList<>();
+    private static int teamSize = 5;
+
     public static void main(String[] args) {
 
+        Scanner scanner = new Scanner(System.in);
+        CSVHandler csv = new CSVHandler();
+        TeamBuilder builder = new TeamBuilder();
+
+        while (true) {
+
+            System.out.println("\n======================================");
+            System.out.println("     TeamMate - Team Formation UI");
+            System.out.println("======================================");
+            System.out.println("1. Load Participants");
+            System.out.println("2. View Participants");
+            System.out.println("3. Set Team Size");
+            System.out.println("4. Run Team Formation");
+            System.out.println("5. View Full Teams");
+            System.out.println("6. View Unassigned Participants");
+            System.out.println("7. Save Teams to CSV");
+            System.out.println("8. Exit");
+            System.out.print("Enter your choice: ");
+
+            int choice;
+            try {
+                choice = Integer.parseInt(scanner.nextLine());
+            } catch (Exception e) {
+                System.out.println("Invalid input! Please enter a number 1–8.");
+                continue;
+            }
+
+            switch (choice) {
+
+                case 1:
+                    loadParticipants(csv);
+                    break;
+
+                case 2:
+                    viewParticipants();
+                    break;
+
+                case 3:
+                    setTeamSize(scanner);
+                    break;
+
+                case 4:
+                    runTeamFormation(builder);
+                    break;
+
+                case 5:
+                    viewFullTeams();
+                    break;
+
+                case 6:
+                    viewLeftover();
+                    break;
+
+                case 7:
+                    saveTeams(csv);
+                    break;
+
+                case 8:
+                    System.out.println("Exiting TeamMate. Goodbye!");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice! Enter a number 1–8.");
+            }
+        }
+    }
+
+    // ================================
+    // Menu Option 1: Load CSV
+    // ================================
+    private static void loadParticipants(CSVHandler csv) {
         try {
-            Scanner scanner = new Scanner(System.in);
+            System.out.println("Loading participants...");
+            participants = csv.loadParticipants("Resources/participants_sample.csv");
+            System.out.println("Loaded " + participants.size() + " participants successfully!");
 
-            System.out.println("========================================");
-            System.out.println("   TeamMate: Team Formation System");
-            System.out.println("========================================");
+        } catch (IOException | InvalidDataException e) {
+            System.out.println("Error loading CSV: " + e.getMessage());
+        }
+    }
 
-            System.out.print("\nEnter desired team size (N): ");
-            int teamSize = scanner.nextInt();
+    // ================================
+    // Menu Option 2: View Participants
+    // ================================
+    private static void viewParticipants() {
+        if (participants.isEmpty()) {
+            System.out.println("No participants loaded yet!");
+            return;
+        }
 
-            CSVHandler handler = new CSVHandler();
+        System.out.println("\nShowing first 10 participants:\n");
 
-            System.out.println("\nLoading participants...");
-            List<Participant> participants =
-                    handler.loadParticipants("Resources/participants_sample.csv");
+        for (int i = 0; i < Math.min(10, participants.size()); i++) {
+            System.out.println((i + 1) + ". " + participants.get(i));
+        }
+    }
 
-            System.out.println("✔ Loaded " + participants.size() + " participants.");
+    // ================================
+    // Menu Option 3: Set Team Size
+    // ================================
+    private static void setTeamSize(Scanner scanner) {
+        System.out.print("Enter team size (minimum 5): ");
 
-            // Thread 1 — Personality classification
+        try {
+            int size = Integer.parseInt(scanner.nextLine());
+
+            if (size < 5) {
+                System.out.println("Team size must be at least 5!");
+                return;
+            }
+
+            teamSize = size;
+            System.out.println("Team size set to " + teamSize);
+
+        } catch (Exception e) {
+            System.out.println("Invalid number!");
+        }
+    }
+
+    // ================================
+    // Menu Option 4: Run Team Formation
+    // ================================
+    private static void runTeamFormation(TeamBuilder builder) {
+
+        if (participants.isEmpty()) {
+            System.out.println("Load participants first!");
+            return;
+        }
+
+        try {
+            System.out.println("Running personality classification...");
             SurveyProcessorThread t1 = new SurveyProcessorThread(participants);
             t1.start();
             t1.join();
 
-            // Thread 2 — Team building
-            TeamBuilder builder = new TeamBuilder();
+            System.out.println("Building teams...");
             TeamBuilderThread t2 = new TeamBuilderThread(participants, teamSize, builder);
             t2.start();
             t2.join();
 
-            List<Team> teams = t2.getTeams();
-            List<Participant> leftover = t2.getLeftover();
+            teams = t2.getTeams();
+            leftover = t2.getLeftover();
 
-            System.out.println("\n=========== FULL TEAMS ===========\n");
-            int num = 1;
-            for (Team t : teams) {
-                System.out.println("Team " + num++);
-                t.getMembers().forEach(System.out::println);
-                System.out.println();
-            }
+            System.out.println("\nTeam Formation Completed!");
+            System.out.println("Full Teams Formed: " + teams.size());
+            System.out.println("Unassigned Participants: " + leftover.size());
 
-            // Print leftover
-            System.out.println("\n=========== UNASSIGNED PARTICIPANTS ===========\n");
-            if (leftover.isEmpty()) {
-                System.out.println("None — all participants assigned to teams.");
-            } else {
-                leftover.forEach(p -> System.out.println(" - " + p));
-            }
-
-            // Save only full teams
-            handler.saveTeams(teams, "Resources/formed_teams.csv");
-            System.out.println("\n✔ Saved full teams to formed_teams.csv");
-
-        } catch (InvalidDataException e) {
-            System.out.println("❌ Invalid Data: " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("❌ I/O Error: " + e.getMessage());
-        } catch (InterruptedException e) {
-            System.out.println("❌ Thread Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("❌ Unexpected Error: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Error during team formation: " + e.getMessage());
+        }
+    }
+
+    // ================================
+    // Menu Option 5: View Full Teams
+    // ================================
+    private static void viewFullTeams() {
+
+        if (teams.isEmpty()) {
+            System.out.println("No teams formed yet!");
+            return;
+        }
+
+        System.out.println("\n========== FULL TEAMS ==========\n");
+
+        int num = 1;
+        for (Team t : teams) {
+            System.out.println("Team " + num++);
+            t.getMembers().forEach(System.out::println);
+            System.out.println();
+        }
+    }
+
+    // ================================
+    // Menu Option 6: View Leftover
+    // ================================
+    private static void viewLeftover() {
+
+        System.out.println("\n========== UNASSIGNED PARTICIPANTS ==========\n");
+
+        if (leftover.isEmpty()) {
+            System.out.println("None — all participants assigned.");
+            return;
+        }
+
+        leftover.forEach(p -> System.out.println(" - " + p));
+    }
+
+    // ================================
+    // Menu Option 7: Save Teams
+    // ================================
+    private static void saveTeams(CSVHandler csv) {
+        try {
+            csv.saveTeams(teams, "Resources/formed_teams.csv");
+            System.out.println("Teams saved to Resources/formed_teams.csv");
+
+        } catch (IOException e) {
+            System.out.println("Error saving file: " + e.getMessage());
         }
     }
 }
