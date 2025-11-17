@@ -104,8 +104,8 @@ public class Main {
     }
 
     // ================================
-    // Menu Option 2: View Participants
-    // ================================
+// Menu Option 2: View Participants
+// ================================
     private static void viewParticipants() {
 
         if (participants.isEmpty()) {
@@ -176,17 +176,21 @@ public class Main {
                     return;
                 }
 
-                // Next page
+                // NEXT PAGE FIXED
                 else if (nav.equals("N")) {
+
                     if (end >= participants.size()) {
+                        // ⭐ FIX: Only show the message once, do NOT re-render list
                         System.out.println("No more participants to show.");
+                        continue; // stay on same page without printing list again
                     } else {
                         index += 10;
                     }
                 }
 
-                // Previous page
+                // PREVIOUS PAGE
                 else if (nav.equals("P")) {
+
                     if (index == 0) {
                         System.out.println("Already at the beginning.");
                     } else {
