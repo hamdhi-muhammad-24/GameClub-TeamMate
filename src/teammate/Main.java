@@ -45,7 +45,7 @@ public class Main {
             try {
                 choice = Integer.parseInt(scanner.nextLine());
             } catch (Exception e) {
-                System.out.println("Invalid input! Please enter a number 1–8.");
+                System.out.println("Invalid input! Please enter a number 1–8");
                 continue;
             }
 
