@@ -9,11 +9,12 @@ import java.util.Map;
 
 public class TeamBuilderThread extends Thread {
 
-    private List<Participant> participants;
-    private int teamSize;
-    private TeamBuilder builder;
+    private final List<Participant> participants;
+    private final int teamSize;
+    private final TeamBuilder builder;
 
-    private List<Team> finalTeams;
+    private List<Team> wellBalanced;
+    private List<Team> secondary;
     private List<Participant> leftover;
 
     public TeamBuilderThread(List<Participant> participants, int teamSize, TeamBuilder builder) {
@@ -22,19 +23,16 @@ public class TeamBuilderThread extends Thread {
         this.builder = builder;
     }
 
-    public List<Team> getTeams() {
-        return finalTeams;
-    }
-
-    public List<Participant> getLeftover() {
-        return leftover;
-    }
+    public List<Team> getWellBalancedTeams() { return wellBalanced; }
+    public List<Team> getSecondaryTeams()    { return secondary; }
+    public List<Participant> getLeftover()   { return leftover; }
 
     @Override
     public void run() {
-        Map<String, Object> result = builder.formTeamsWithLeftovers(participants, teamSize);
+        Map<String, Object> result = builder.formAllTeams(participants, teamSize);
 
-        finalTeams = (List<Team>) result.get("teams");
-        leftover   = (List<Participant>) result.get("leftover");
+        wellBalanced = (List<Team>) result.get("wellBalanced");
+        secondary    = (List<Team>) result.get("secondary");
+        leftover     = (List<Participant>) result.get("leftover");
     }
 }
