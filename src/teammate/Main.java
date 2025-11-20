@@ -18,7 +18,7 @@ public class Main {
     private static List<Team> secondary = new ArrayList<>();
     private static List<Participant> leftover = new ArrayList<>();
 
-    private static int teamSize = 5;
+    private static Integer teamSize = null;
 
     public static void main(String[] args) {
 
@@ -64,6 +64,7 @@ public class Main {
 
                 case 4:
                     if (!checkParticipantsLoaded()) break;
+                    if (!checkTeamSizeSet()) break;  // NEW CHECK
                     runTeamFormation(builder);
                     break;
 
@@ -115,6 +116,18 @@ public class Main {
         }
         return true;
     }
+
+    // ===============================================
+    // CHECK IF TEAM SIZE WAS SET BY USER
+    // ===============================================
+    private static boolean checkTeamSizeSet() {
+        if (teamSize == null) {
+            System.out.println("❗ Please set team size first (Option 3).");
+            return false;
+        }
+        return true;
+    }
+
 
     private static boolean checkTeamsFormed() {
         if (wellBalanced.isEmpty() && secondary.isEmpty()) {
@@ -250,7 +263,7 @@ public class Main {
             t1.start();
             t1.join();
 
-            TeamBuilderThread t2 = new TeamBuilderThread(participants, teamSize, builder);
+            TeamBuilderThread t2 = new TeamBuilderThread(participants, teamSize.intValue(), builder);
             t2.start();
             t2.join();
 
