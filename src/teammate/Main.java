@@ -133,9 +133,117 @@ public class Main {
     // ===============================================
     // VIEW PARTICIPANTS (unchanged)
     // ===============================================
+
+    // ================================
+// Menu Option 2: View Participants
+// ================================
     private static void viewParticipants() {
-        System.out.println("\n(Your pagination code goes here)");
+
+        if (participants.isEmpty()) {
+            System.out.println("No participants loaded yet!");
+            return;
+        }
+
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("\nView Participants:");
+        System.out.println("1. View ALL participants");
+        System.out.println("2. View 10-by-10");
+        System.out.print("Enter your choice: ");
+
+        String choice = scanner.nextLine().trim();
+
+        // ====================================================
+        // OPTION 1 — VIEW ALL PARTICIPANTS
+        // ====================================================
+        if (choice.equals("1")) {
+
+            System.out.println("\n===== ALL PARTICIPANTS =====\n");
+
+            for (int i = 0; i < participants.size(); i++) {
+                System.out.println((i + 1) + ". " + participants.get(i));
+            }
+
+            System.out.println("\nEnd of participant list.");
+            System.out.println("Press Enter to return to main menu...");
+            scanner.nextLine();
+            return;
+        }
+
+
+        // ====================================================
+        // OPTION 2 — PAGINATED VIEW (10 by 10)
+        // ====================================================
+        else if (choice.equals("2")) {
+
+            int index = 0; // start position
+
+            while (true) {
+
+                int end = Math.min(index + 10, participants.size());
+
+                // Show range info
+                System.out.println("\nShowing participants " +
+                        (index + 1) + " to " + end +
+                        " of " + participants.size() + "\n");
+
+                // Print participants in current range
+                for (int i = index; i < end; i++) {
+                    System.out.println((i + 1) + ". " + participants.get(i));
+                }
+
+                // If this is the last partial batch (<10)
+                if (end == participants.size() && (end - index) < 10) {
+                    System.out.println("\nShowing last " + (end - index) + " participants.");
+                }
+
+                // Navigation options
+                System.out.println("\nOptions: [N] Next | [P] Previous | [Q] Quit");
+                System.out.print("Enter your choice: ");
+                String nav = scanner.nextLine().trim().toUpperCase();
+
+                // Quit pagination
+                if (nav.equals("Q")) {
+                    return;
+                }
+
+                // NEXT PAGE FIXED
+                else if (nav.equals("N")) {
+
+                    if (end >= participants.size()) {
+                        // ⭐ FIX: Only show the message once, do NOT re-render list
+                        System.out.println("No more participants to show.");
+                        continue; // stay on same page without printing list again
+                    } else {
+                        index += 10;
+                    }
+                }
+
+                // PREVIOUS PAGE
+                else if (nav.equals("P")) {
+
+                    if (index == 0) {
+                        System.out.println("Already at the beginning.");
+                    } else {
+                        index -= 10;
+                    }
+                }
+
+                // Invalid input
+                else {
+                    System.out.println("Invalid option! Enter N, P, or Q.");
+                }
+            }
+        }
+
+        // ====================================================
+        // INVALID CHOICE
+        // ====================================================
+        else {
+            System.out.println("Invalid choice! Returning to main menu.");
+        }
     }
+
 
     // ===============================================
     // SET TEAM SIZE
