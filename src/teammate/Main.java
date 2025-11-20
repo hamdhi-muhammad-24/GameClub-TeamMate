@@ -53,14 +53,44 @@ public class Main {
             switch (choice) {
 
                 case 1: loadParticipants(csv); break;
-                case 2: viewParticipants(); break;
-                case 3: setTeamSize(scanner); break;
-                case 4: runTeamFormation(builder); break;
-                case 5: viewWellBalanced(); break;
-                case 6: viewSecondary(); break;
-                case 7: viewUnassigned(); break;
-                case 8: saveAll(csv); break;
-                case 9: System.out.println("Goodbye!"); return;
+
+                case 2:
+                    if (!checkParticipantsLoaded()) break;
+                    viewParticipants();
+                    break;
+
+                case 3:
+                    setTeamSize(scanner);
+                    break;
+
+                case 4:
+                    if (!checkParticipantsLoaded()) break;
+                    runTeamFormation(builder);
+                    break;
+
+                case 5:
+                    if (!checkTeamsFormed()) break;
+                    viewWellBalanced();
+                    break;
+
+                case 6:
+                    if (!checkTeamsFormed()) break;
+                    viewSecondary();
+                    break;
+
+                case 7:
+                    if (!checkParticipantsLoaded()) break;
+                    viewUnassigned();
+                    break;
+
+                case 8:
+                    if (!checkParticipantsLoaded()) break;
+                    saveAll(csv);
+                    break;
+
+                case 9:
+                    System.out.println("Goodbye!");
+                    return;
 
                 default:
                     System.out.println("Enter a valid number!");
@@ -69,7 +99,7 @@ public class Main {
     }
 
     // ===============================================
-    // OPTION 1
+    // LOAD PARTICIPANTS
     // ===============================================
     private static void loadParticipants(CSVHandler csv) {
         try {
@@ -82,16 +112,33 @@ public class Main {
     }
 
     // ===============================================
-    // OPTION 2 — View participants (with pagination)
+    // CHECKS
     // ===============================================
-    private static void viewParticipants() {
-        // (your existing pagination method unchanged)
-        System.out.println("\nShowing participants...");
-        // You already uploaded the final working version
+    private static boolean checkParticipantsLoaded() {
+        if (participants == null || participants.isEmpty()) {
+            System.out.println("❗ Please load participants first (Option 1).");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean checkTeamsFormed() {
+        if (wellBalanced.isEmpty() && secondary.isEmpty()) {
+            System.out.println("❗ Please run team formation first (Option 4).");
+            return false;
+        }
+        return true;
     }
 
     // ===============================================
-    // OPTION 3
+    // VIEW PARTICIPANTS (unchanged)
+    // ===============================================
+    private static void viewParticipants() {
+        System.out.println("\n(Your pagination code goes here)");
+    }
+
+    // ===============================================
+    // SET TEAM SIZE
     // ===============================================
     private static void setTeamSize(Scanner scan) {
         System.out.print("Enter team size (min 5): ");
@@ -110,7 +157,7 @@ public class Main {
     }
 
     // ===============================================
-    // OPTION 4 — Run Team Formation
+    // RUN TEAM FORMATION
     // ===============================================
     private static void runTeamFormation(TeamBuilder builder) {
 
@@ -139,6 +186,8 @@ public class Main {
         }
     }
 
+    // ===============================================
+    // VIEW TEAMS
     // ===============================================
     private static void viewWellBalanced() {
         if (wellBalanced.isEmpty()) {
@@ -173,6 +222,9 @@ public class Main {
         leftover.forEach(p -> System.out.println(" - " + p));
     }
 
+    // ===============================================
+    // SAVE ALL TEAMS
+    // ===============================================
     private static void saveAll(CSVHandler csv) {
         try {
             csv.saveAllTeams(wellBalanced, secondary, leftover, "Resources/all_teams_output.csv");
