@@ -35,18 +35,17 @@ public class Main {
             System.out.println("2. View Participants");
             System.out.println("3. Set Team Size");
             System.out.println("4. Run Team Formation");
-            System.out.println("5. View WELL-BALANCED Teams");
-            System.out.println("6. View SECONDARY Teams");
-            System.out.println("7. View UNASSIGNED Participants");
-            System.out.println("8. Save All Teams to CSV");
-            System.out.println("9. Exit");
+            System.out.println("5. View FORMED Teams");
+            System.out.println("6. View UNASSIGNED Participants");
+            System.out.println("7. Save All Teams to CSV");
+            System.out.println("8. Exit");
             System.out.print("Enter choice: ");
 
             int choice;
             try {
                 choice = Integer.parseInt(scanner.nextLine());
             } catch (Exception e) {
-                System.out.println("Invalid number! Enter 1–9.");
+                System.out.println("Invalid number! Enter 1–8.");
                 continue;
             }
 
@@ -70,25 +69,20 @@ public class Main {
 
                 case 5:
                     if (!checkTeamsFormed()) break;
-                    viewWellBalanced();
+                    viewFormedTeams(scanner);
                     break;
 
                 case 6:
-                    if (!checkTeamsFormed()) break;
-                    viewSecondary();
-                    break;
-
-                case 7:
                     if (!checkParticipantsLoaded()) break;
                     viewUnassigned();
                     break;
 
-                case 8:
+                case 7:
                     if (!checkParticipantsLoaded()) break;
                     saveAll(csv);
                     break;
 
-                case 9:
+                case 8:
                     System.out.println("Goodbye!");
                     return;
 
@@ -131,18 +125,9 @@ public class Main {
     }
 
     // ===============================================
-    // VIEW PARTICIPANTS (unchanged)
+    // OPTION 2 — VIEW PARTICIPANTS (pagination)
     // ===============================================
-
-    // ================================
-// Menu Option 2: View Participants
-// ================================
     private static void viewParticipants() {
-
-        if (participants.isEmpty()) {
-            System.out.println("No participants loaded yet!");
-            return;
-        }
 
         Scanner scanner = new Scanner(System.in);
 
@@ -153,111 +138,79 @@ public class Main {
 
         String choice = scanner.nextLine().trim();
 
-        // ====================================================
-        // OPTION 1 — VIEW ALL PARTICIPANTS
-        // ====================================================
         if (choice.equals("1")) {
 
             System.out.println("\n===== ALL PARTICIPANTS =====\n");
 
-            for (int i = 0; i < participants.size(); i++) {
+            for (int i = 0; i < participants.size(); i++)
                 System.out.println((i + 1) + ". " + participants.get(i));
-            }
 
             System.out.println("\nEnd of participant list.");
-            System.out.println("Press Enter to return to main menu...");
+            System.out.println("Press Enter to return...");
             scanner.nextLine();
             return;
         }
 
-
-        // ====================================================
-        // OPTION 2 — PAGINATED VIEW (10 by 10)
-        // ====================================================
         else if (choice.equals("2")) {
 
-            int index = 0; // start position
+            int index = 0;
 
             while (true) {
 
                 int end = Math.min(index + 10, participants.size());
 
-                // Show range info
-                System.out.println("\nShowing participants " +
-                        (index + 1) + " to " + end +
+                System.out.println("\nShowing participants " + (index + 1) + " to " + end +
                         " of " + participants.size() + "\n");
 
-                // Print participants in current range
                 for (int i = index; i < end; i++) {
                     System.out.println((i + 1) + ". " + participants.get(i));
                 }
 
-                // If this is the last partial batch (<10)
-                if (end == participants.size() && (end - index) < 10) {
-                    System.out.println("\nShowing last " + (end - index) + " participants.");
-                }
-
-                // Navigation options
                 System.out.println("\nOptions: [N] Next | [P] Previous | [Q] Quit");
-                System.out.print("Enter your choice: ");
+                System.out.print("Enter choice: ");
                 String nav = scanner.nextLine().trim().toUpperCase();
 
-                // Quit pagination
-                if (nav.equals("Q")) {
-                    return;
-                }
+                if (nav.equals("Q")) return;
 
-                // NEXT PAGE FIXED
                 else if (nav.equals("N")) {
-
                     if (end >= participants.size()) {
-                        // ⭐ FIX: Only show the message once, do NOT re-render list
                         System.out.println("No more participants to show.");
-                        continue; // stay on same page without printing list again
-                    } else {
-                        index += 10;
-                    }
+                    } else index += 10;
                 }
 
-                // PREVIOUS PAGE
                 else if (nav.equals("P")) {
-
-                    if (index == 0) {
-                        System.out.println("Already at the beginning.");
-                    } else {
-                        index -= 10;
-                    }
+                    if (index == 0)
+                        System.out.println("Already at beginning.");
+                    else index -= 10;
                 }
 
-                // Invalid input
                 else {
                     System.out.println("Invalid option! Enter N, P, or Q.");
                 }
             }
         }
 
-        // ====================================================
-        // INVALID CHOICE
-        // ====================================================
         else {
-            System.out.println("Invalid choice! Returning to main menu.");
+            System.out.println("Invalid choice.");
         }
     }
 
-
     // ===============================================
-    // SET TEAM SIZE
+    // OPTION 3 — SET TEAM SIZE
     // ===============================================
     private static void setTeamSize(Scanner scan) {
+
         System.out.print("Enter team size (min 5): ");
+
         try {
             int size = Integer.parseInt(scan.nextLine());
             if (size < 5) {
                 System.out.println("Must be >= 5.");
                 return;
             }
+
             teamSize = size;
-            System.out.println("Team size updated.");
+            System.out.println("Updated team size: " + teamSize);
 
         } catch (Exception e) {
             System.out.println("Invalid number!");
@@ -265,37 +218,84 @@ public class Main {
     }
 
     // ===============================================
-    // RUN TEAM FORMATION
+    // OPTION 4 — RUN TEAM FORMATION
     // ===============================================
     private static void runTeamFormation(TeamBuilder builder) {
 
         try {
-            System.out.println("Running personality classification...");
             SurveyProcessorThread t1 = new SurveyProcessorThread(participants);
             t1.start();
             t1.join();
 
-            System.out.println("Forming teams...");
             TeamBuilderThread t2 = new TeamBuilderThread(participants, teamSize, builder);
             t2.start();
             t2.join();
 
             wellBalanced = t2.getWellBalancedTeams();
-            secondary = t2.getSecondaryTeams();
-            leftover = t2.getLeftover();
+            secondary   = t2.getSecondaryTeams();
+            leftover    = t2.getLeftover();
 
-            System.out.println("\nFormation Complete!");
+            System.out.println("\nFormation Completed!");
             System.out.println("Well-Balanced Teams: " + wellBalanced.size());
-            System.out.println("Secondary Teams: " + secondary.size());
-            System.out.println("Unassigned Participants: " + leftover.size());
+            System.out.println("Secondary Teams   : " + secondary.size());
+            System.out.println("Unassigned        : " + leftover.size());
 
         } catch (Exception e) {
-            System.out.println("Error forming teams: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     // ===============================================
-    // VIEW TEAMS
+    // OPTION 5 — SUB-MENU: VIEW FORMED TEAMS
+    // ===============================================
+    private static void viewFormedTeams(Scanner scanner) {
+
+        while (true) {
+            System.out.println("\n========== VIEW FORMED TEAMS ==========");
+            System.out.println("1. View ALL Teams");
+            System.out.println("2. View WELL-BALANCED Teams");
+            System.out.println("3. View SECONDARY Teams");
+            System.out.println("4. Back to Main Menu");
+            System.out.print("Enter choice: ");
+
+            String c = scanner.nextLine();
+
+            switch (c) {
+
+                case "1": viewAllTeams(); break;
+                case "2": viewWellBalanced(); break;
+                case "3": viewSecondary(); break;
+                case "4": return;
+
+                default: System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    private static void viewAllTeams() {
+        if (wellBalanced.isEmpty() && secondary.isEmpty()) {
+            System.out.println("No teams formed.");
+            return;
+        }
+
+        int n = 1;
+        System.out.println("\n======= ALL TEAMS =======\n");
+
+        for (Team t : wellBalanced) {
+            System.out.println("WB-Team " + n++);
+            t.getMembers().forEach(System.out::println);
+            System.out.println();
+        }
+
+        for (Team t : secondary) {
+            System.out.println("SC-Team " + n++);
+            t.getMembers().forEach(System.out::println);
+            System.out.println();
+        }
+    }
+
+    // ===============================================
+    // VIEW TEAMS INDIVIDUALLY
     // ===============================================
     private static void viewWellBalanced() {
         if (wellBalanced.isEmpty()) {
@@ -321,22 +321,34 @@ public class Main {
         }
     }
 
+    // ===============================================
+    // OPTION 6 — VIEW UNASSIGNED
+    // ===============================================
     private static void viewUnassigned() {
+
         if (leftover.isEmpty()) {
             System.out.println("No unassigned participants.");
             return;
         }
-        System.out.println("\nUnassigned:");
+
+        System.out.println("\nUnassigned Participants:\n");
         leftover.forEach(p -> System.out.println(" - " + p));
     }
 
     // ===============================================
-    // SAVE ALL TEAMS
+    // OPTION 7 — SAVE ALL TEAMS
     // ===============================================
     private static void saveAll(CSVHandler csv) {
         try {
-            csv.saveAllTeams(wellBalanced, secondary, leftover, "Resources/all_teams_output.csv");
+            csv.saveAllTeams(
+                    wellBalanced,
+                    secondary,
+                    leftover,
+                    "Resources/all_teams_output.csv"
+            );
+
             System.out.println("Saved to Resources/all_teams_output.csv");
+
         } catch (IOException e) {
             System.out.println("Save error: " + e.getMessage());
         }
