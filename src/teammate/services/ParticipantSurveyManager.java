@@ -23,8 +23,10 @@ public class ParticipantSurveyManager {
         // ------------------------------------------------------
         // BASIC INFO
         // ------------------------------------------------------
-        System.out.print("Enter your ID: ");
-        String id = sc.nextLine().trim();
+        // AUTO-GENERATE NEXT ID
+        String nextId = generateNextId();
+        System.out.println("Assigned ID: " + nextId);
+
 
         System.out.print("Enter your Name: ");
         String name = sc.nextLine().trim();
@@ -73,7 +75,7 @@ public class ParticipantSurveyManager {
         // SAVE INTO CSV
         // ------------------------------------------------------
         appendToCSV(new Participant(
-                id, name, email, game, role, skill, finalScore, personalityType
+                nextId, name, email, game, role, skill, finalScore, personalityType
         ));
 
         System.out.println("Your responses have been recorded successfully!");
@@ -128,4 +130,35 @@ public class ParticipantSurveyManager {
             }
         }
     }
+
+    // ======================================================
+//  AUTO-GENERATE NEXT PARTICIPANT ID (P### FORMAT)
+// ======================================================
+    private String generateNextId() {
+        String csvPath = "Resources/participants_sample.csv";
+        int maxNumber = 0;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
+            br.readLine(); // skip header
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] data = line.split(",");
+                String id = data[0]; // ID column (P###)
+
+                if (id.startsWith("P")) {
+                    int num = Integer.parseInt(id.substring(1)); // Remove 'P'
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error reading ID from CSV: " + e.getMessage());
+        }
+
+        int nextNum = maxNumber + 1;
+        return "P" + nextNum; // ALWAYS UPPERCASE P
+    }
+
 }
