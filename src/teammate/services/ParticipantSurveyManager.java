@@ -27,12 +27,23 @@ public class ParticipantSurveyManager {
         String nextId = generateNextId();
         System.out.println("Assigned ID: " + nextId);
 
-
         System.out.print("Enter your Name: ");
         String name = sc.nextLine().trim();
 
-        System.out.print("Enter your Email: ");
-        String email = sc.nextLine().trim();
+        // ================================
+        // FIXED EMAIL VALIDATION
+        // ================================
+        String email;
+        while (true) {
+            System.out.print("Enter your Email (must end with @university.edu): ");
+            email = sc.nextLine().trim();
+
+            if (email.toLowerCase().endsWith("@university.edu")) {
+                break; // valid
+            }
+
+            System.out.println("❌ Invalid email! Example: student123@university.edu\n");
+        }
 
         System.out.print("Enter Preferred Game: ");
         String game = sc.nextLine().trim();
@@ -56,8 +67,8 @@ public class ParticipantSurveyManager {
         // ------------------------------------------------------
         // SCORING LOGIC (your rules)
         // ------------------------------------------------------
-        int rawTotal = q1 + q2 + q3 + q4 + q5;    // 5–25
-        int finalScore = rawTotal * 4;            // 20–100
+        int rawTotal = q1 + q2 + q3 + q4 + q5; // 5–25
+        int finalScore = rawTotal * 4; // 20–100
 
         String personalityType;
 
@@ -81,14 +92,13 @@ public class ParticipantSurveyManager {
         System.out.println("Your responses have been recorded successfully!");
     }
 
-
     // ======================================================
     // APPEND PARTICIPANT ROW INTO CSV
     // ======================================================
     private void appendToCSV(Participant p) {
 
         try {
-            FileWriter fw = new FileWriter(CSV_PATH, true);  // append mode
+            FileWriter fw = new FileWriter(CSV_PATH, true); // append mode
             BufferedWriter bw = new BufferedWriter(fw);
 
             bw.write(
@@ -109,7 +119,6 @@ public class ParticipantSurveyManager {
             System.out.println("Error saving participant: " + e.getMessage());
         }
     }
-
 
     // ======================================================
     // SAFE NUMBER INPUT (with validation)
@@ -132,10 +141,10 @@ public class ParticipantSurveyManager {
     }
 
     // ======================================================
-//  AUTO-GENERATE NEXT PARTICIPANT ID (P### FORMAT)
-// ======================================================
+    // AUTO-GENERATE NEXT PARTICIPANT ID (P### FORMAT)
+    // ======================================================
     private String generateNextId() {
-        String csvPath = "Resources/participants_sample.csv";
+        String csvPath = CSV_PATH;
         int maxNumber = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
@@ -160,5 +169,4 @@ public class ParticipantSurveyManager {
         int nextNum = maxNumber + 1;
         return "P" + nextNum; // ALWAYS UPPERCASE P
     }
-
 }
