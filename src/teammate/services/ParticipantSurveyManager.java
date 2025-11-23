@@ -87,8 +87,35 @@ public class ParticipantSurveyManager {
             break;
         }
 
-        System.out.print("Enter Preferred Role: ");
-        String role = sc.nextLine().trim();
+        // ================================
+        // PREFERRED ROLE SELECTION (1–5)
+        // ================================
+        String role = "";
+
+        while (true) {
+            System.out.println("\nChoose your Preferred Role:");
+            System.out.println("1. Strategist");
+            System.out.println("2. Attacker");
+            System.out.println("3. Defender");
+            System.out.println("4. Supporter");
+            System.out.println("5. Coordinator");
+            System.out.print("Enter choice (1–5): ");
+
+            String r = sc.nextLine().trim();
+
+            switch (r) {
+                case "1": role = "Strategist"; break;
+                case "2": role = "Attacker"; break;
+                case "3": role = "Defender"; break;
+                case "4": role = "Supporter"; break;
+                case "5": role = "Coordinator"; break;
+                default:
+                    System.out.println("❌ Invalid choice! Please enter 1–5.\n");
+                    continue;
+            }
+            break;
+        }
+
 
         int skill = getNumberInput(sc, "Enter Skill Level (1–10): ", 1, 10);
 
