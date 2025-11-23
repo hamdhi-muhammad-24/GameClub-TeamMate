@@ -21,9 +21,8 @@ public class ParticipantSurveyManager {
         System.out.println("===============================\n");
 
         // ------------------------------------------------------
-        // BASIC INFO
-        // ------------------------------------------------------
         // AUTO-GENERATE NEXT ID
+        // ------------------------------------------------------
         String nextId = generateNextId();
         System.out.println("Assigned ID: " + nextId);
 
@@ -31,18 +30,24 @@ public class ParticipantSurveyManager {
         String name = sc.nextLine().trim();
 
         // ================================
-        // FIXED EMAIL VALIDATION
+        // EMAIL VALIDATION (Updated)
         // ================================
         String email;
         while (true) {
             System.out.print("Enter your Email (must end with @university.edu): ");
             email = sc.nextLine().trim();
 
-            if (email.toLowerCase().endsWith("@university.edu")) {
-                break; // valid
+            if (!email.toLowerCase().endsWith("@university.edu")) {
+                System.out.println("❌ Invalid email! It must end with @university.edu\n");
+                continue;
             }
 
-            System.out.println("❌ Invalid email! Example: student123@university.edu\n");
+            if (emailExists(email)) {
+                System.out.println("❌ This email is already registered! Try a different email.\n");
+                continue;
+            }
+
+            break; // VALID email
         }
 
         System.out.print("Enter Preferred Game: ");
@@ -67,11 +72,10 @@ public class ParticipantSurveyManager {
         // ------------------------------------------------------
         // SCORING LOGIC (your rules)
         // ------------------------------------------------------
-        int rawTotal = q1 + q2 + q3 + q4 + q5; // 5–25
-        int finalScore = rawTotal * 4; // 20–100
+        int rawTotal = q1 + q2 + q3 + q4 + q5;   // 5–25
+        int finalScore = rawTotal * 4;           // 20–100
 
         String personalityType;
-
         if (finalScore >= 90) personalityType = "Leader";
         else if (finalScore >= 70) personalityType = "Balanced";
         else personalityType = "Thinker";
@@ -92,13 +96,43 @@ public class ParticipantSurveyManager {
         System.out.println("Your responses have been recorded successfully!");
     }
 
+
+    // ======================================================
+    // CHECK IF EMAIL ALREADY EXISTS IN CSV
+    // ======================================================
+    private boolean emailExists(String email) {
+        try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
+
+            br.readLine(); // skip header
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] data = line.split(",");
+                if (data.length >= 3) {
+                    String existingEmail = data[2].trim();
+                    if (existingEmail.equalsIgnoreCase(email)) {
+                        return true; // email found!
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error checking email uniqueness: " + e.getMessage());
+        }
+
+        return false;
+    }
+
+
     // ======================================================
     // APPEND PARTICIPANT ROW INTO CSV
     // ======================================================
     private void appendToCSV(Participant p) {
 
         try {
-            FileWriter fw = new FileWriter(CSV_PATH, true); // append mode
+            FileWriter fw = new FileWriter(CSV_PATH, true);  // append mode
             BufferedWriter bw = new BufferedWriter(fw);
 
             bw.write(
@@ -120,8 +154,9 @@ public class ParticipantSurveyManager {
         }
     }
 
+
     // ======================================================
-    // SAFE NUMBER INPUT (with validation)
+    // SAFE NUMBER INPUT
     // ======================================================
     private int getNumberInput(Scanner sc, String label, int min, int max) {
 
@@ -140,14 +175,14 @@ public class ParticipantSurveyManager {
         }
     }
 
+
     // ======================================================
     // AUTO-GENERATE NEXT PARTICIPANT ID (P### FORMAT)
     // ======================================================
     private String generateNextId() {
-        String csvPath = CSV_PATH;
         int maxNumber = 0;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
             br.readLine(); // skip header
             String line;
 
@@ -155,18 +190,18 @@ public class ParticipantSurveyManager {
                 if (line.trim().isEmpty()) continue;
 
                 String[] data = line.split(",");
-                String id = data[0]; // ID column (P###)
+                String id = data[0]; // ID col
 
                 if (id.startsWith("P")) {
-                    int num = Integer.parseInt(id.substring(1)); // Remove 'P'
+                    int num = Integer.parseInt(id.substring(1));
                     if (num > maxNumber) maxNumber = num;
                 }
             }
+
         } catch (Exception e) {
-            System.out.println("Error reading ID from CSV: " + e.getMessage());
+            System.out.println("Error reading ID: " + e.getMessage());
         }
 
-        int nextNum = maxNumber + 1;
-        return "P" + nextNum; // ALWAYS UPPERCASE P
+        return "P" + (maxNumber + 1);
     }
 }
