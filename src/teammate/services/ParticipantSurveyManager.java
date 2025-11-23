@@ -207,13 +207,43 @@ public class ParticipantSurveyManager {
     }
 
 
+
     // ======================================================
-    // APPEND NEW PARTICIPANT TO CSV
+    // APPEND NEW PARTICIPANT TO CSV (FIXED NEWLINE ISSUE)
     // ======================================================
     private void appendToCSV(Participant p) {
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(CSV_PATH, true))) {
+        try {
+            File file = new File(CSV_PATH);
 
+            // Check the last character of the file
+            boolean needsNewLine = false;
+
+            if (file.length() > 0) {
+                FileInputStream fis = new FileInputStream(file);
+                int lastByte = -1;
+                int current;
+
+                while ((current = fis.read()) != -1) {
+                    lastByte = current;
+                }
+                fis.close();
+
+                // ASCII 10 = '\n'
+                if (lastByte != '\n') {
+                    needsNewLine = true;
+                }
+            }
+
+            FileWriter fw = new FileWriter(CSV_PATH, true);
+            BufferedWriter bw = new BufferedWriter(fw);
+
+            // Add missing newline if needed
+            if (needsNewLine) {
+                bw.newLine();
+            }
+
+            // Write new participant
             bw.write(
                     p.getId() + "," +
                             p.getName() + "," +
@@ -224,12 +254,15 @@ public class ParticipantSurveyManager {
                             p.getPersonalityScore() + "," +
                             p.getPersonalityType()
             );
-            bw.newLine();
+
+            bw.newLine();  // ensure next append always goes to new line
+            bw.close();
 
         } catch (IOException e) {
             System.out.println("Error saving participant: " + e.getMessage());
         }
     }
+
 
 
     // ======================================================
