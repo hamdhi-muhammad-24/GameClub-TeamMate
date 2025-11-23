@@ -26,8 +26,22 @@ public class ParticipantSurveyManager {
         String nextId = generateNextId();
         System.out.println("Assigned ID: " + nextId);
 
-        System.out.print("Enter your Name: ");
-        String name = sc.nextLine().trim();
+        // ================================
+        // NAME VALIDATION (must not be empty)
+        // ================================
+        String name = "";
+        while (true) {
+            System.out.print("Enter your Name: ");
+            name = sc.nextLine().trim();
+
+            if (name.isEmpty()) {
+                System.out.println("❌ Name cannot be empty! Please enter your name.\n");
+                continue;
+            }
+
+            break; // valid
+        }
+
 
         // ================================
         // EMAIL VALIDATION + No duplicates
