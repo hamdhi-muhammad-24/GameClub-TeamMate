@@ -90,9 +90,18 @@ public class ParticipantSurveyManager {
                 case "6": game = "Valorant"; break;
 
                 case "7":
-                    System.out.print("Enter your game: ");
-                    game = sc.nextLine().trim();
+                    while (true) {
+                        System.out.print("Enter your game (cannot be empty): ");
+                        game = sc.nextLine().trim();
+
+                        if (game.isEmpty()) {
+                            System.out.println("❌ Game name cannot be empty!\n");
+                            continue;
+                        }
+                        break;  // valid
+                    }
                     break;
+
 
                 default:
                     System.out.println("Invalid choice! Please enter 1–7.\n");
