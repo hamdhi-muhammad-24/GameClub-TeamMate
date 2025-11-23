@@ -30,7 +30,7 @@ public class ParticipantSurveyManager {
         String name = sc.nextLine().trim();
 
         // ================================
-        // EMAIL VALIDATION (Updated)
+        // EMAIL VALIDATION + No duplicates
         // ================================
         String email;
         while (true) {
@@ -47,11 +47,45 @@ public class ParticipantSurveyManager {
                 continue;
             }
 
-            break; // VALID email
+            break;
         }
 
-        System.out.print("Enter Preferred Game: ");
-        String game = sc.nextLine().trim();
+        // ================================
+        // PREFERRED GAME SELECTION (1–7)
+        // ================================
+        String game = "";
+        while (true) {
+            System.out.println("\nChoose your Preferred Game:");
+            System.out.println("1. Chess");
+            System.out.println("2. FIFA");
+            System.out.println("3. Basketball");
+            System.out.println("4. CS:GO");
+            System.out.println("5. DOTA 2");
+            System.out.println("6. Valorant");
+            System.out.println("7. Other");
+            System.out.print("Enter choice (1–7): ");
+
+            String input = sc.nextLine().trim();
+
+            switch (input) {
+                case "1": game = "Chess"; break;
+                case "2": game = "FIFA"; break;
+                case "3": game = "Basketball"; break;
+                case "4": game = "CS:GO"; break;
+                case "5": game = "DOTA 2"; break;
+                case "6": game = "Valorant"; break;
+
+                case "7":
+                    System.out.print("Enter your game: ");
+                    game = sc.nextLine().trim();
+                    break;
+
+                default:
+                    System.out.println("Invalid choice! Please enter 1–7.\n");
+                    continue;
+            }
+            break;
+        }
 
         System.out.print("Enter Preferred Role: ");
         String role = sc.nextLine().trim();
@@ -69,11 +103,8 @@ public class ParticipantSurveyManager {
         int q4 = getNumberInput(sc, "Q4. I am calm under pressure and can help maintain team morale.            : ", 1, 5);
         int q5 = getNumberInput(sc, "Q5. I like making quick decisions and adapting in dynamic situations.      : ", 1, 5);
 
-        // ------------------------------------------------------
-        // SCORING LOGIC (your rules)
-        // ------------------------------------------------------
-        int rawTotal = q1 + q2 + q3 + q4 + q5;   // 5–25
-        int finalScore = rawTotal * 4;           // 20–100
+        int rawTotal = q1 + q2 + q3 + q4 + q5;
+        int finalScore = rawTotal * 4;
 
         String personalityType;
         if (finalScore >= 90) personalityType = "Leader";
@@ -113,7 +144,7 @@ public class ParticipantSurveyManager {
                 if (data.length >= 3) {
                     String existingEmail = data[2].trim();
                     if (existingEmail.equalsIgnoreCase(email)) {
-                        return true; // email found!
+                        return true;
                     }
                 }
             }
@@ -127,13 +158,11 @@ public class ParticipantSurveyManager {
 
 
     // ======================================================
-    // APPEND PARTICIPANT ROW INTO CSV
+    // APPEND NEW PARTICIPANT TO CSV
     // ======================================================
     private void appendToCSV(Participant p) {
 
-        try {
-            FileWriter fw = new FileWriter(CSV_PATH, true);  // append mode
-            BufferedWriter bw = new BufferedWriter(fw);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(CSV_PATH, true))) {
 
             bw.write(
                     p.getId() + "," +
@@ -145,9 +174,7 @@ public class ParticipantSurveyManager {
                             p.getPersonalityScore() + "," +
                             p.getPersonalityType()
             );
-
             bw.newLine();
-            bw.close();
 
         } catch (IOException e) {
             System.out.println("Error saving participant: " + e.getMessage());
@@ -162,6 +189,7 @@ public class ParticipantSurveyManager {
 
         while (true) {
             System.out.print(label);
+
             try {
                 int n = Integer.parseInt(sc.nextLine());
                 if (n < min || n > max) {
@@ -169,6 +197,7 @@ public class ParticipantSurveyManager {
                     continue;
                 }
                 return n;
+
             } catch (Exception e) {
                 System.out.println("Invalid number! Try again.");
             }
@@ -183,6 +212,7 @@ public class ParticipantSurveyManager {
         int maxNumber = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
+
             br.readLine(); // skip header
             String line;
 
@@ -190,7 +220,7 @@ public class ParticipantSurveyManager {
                 if (line.trim().isEmpty()) continue;
 
                 String[] data = line.split(",");
-                String id = data[0]; // ID col
+                String id = data[0];
 
                 if (id.startsWith("P")) {
                     int num = Integer.parseInt(id.substring(1));
