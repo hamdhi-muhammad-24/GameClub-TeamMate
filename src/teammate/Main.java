@@ -65,7 +65,7 @@ public class Main {
     }
 
     // =============================================================
-    // ORGANIZER LOGIN
+    // ORGANIZER LOGIN (Case-insensitive username)
     // =============================================================
     private static boolean organizerLogin(Scanner scanner) {
 
@@ -73,13 +73,15 @@ public class Main {
         final String PASSWORD = "1234";
 
         System.out.println("\n--------- Organizer Login ---------");
+
         System.out.print("Enter Username: ");
         String u = scanner.nextLine().trim();
 
         System.out.print("Enter Password: ");
         String p = scanner.nextLine().trim();
 
-        if (u.equals(USERNAME) && p.equals(PASSWORD)) {
+        // username = case-insensitive
+        if (u.equalsIgnoreCase(USERNAME) && p.equals(PASSWORD)) {
             System.out.println("✔ Login Successful!\n");
             return true;
         } else {
@@ -87,6 +89,7 @@ public class Main {
             return false;
         }
     }
+
 
     // =============================================================
     // ORGANIZER MENU
