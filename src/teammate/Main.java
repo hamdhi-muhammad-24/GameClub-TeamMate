@@ -154,7 +154,14 @@ public class Main {
             System.out.println("❗ Please set team size first (Option 3).");
             return false;
         }
+
+        if (teamSize <= 1) {
+            System.out.println("❗ Invalid team size. Please set a value greater than 1.");
+            return false;
+        }
+
         return true;
+
     }
 
     private static boolean checkTeamsFormed() {
@@ -250,8 +257,8 @@ public class Main {
         System.out.print("Enter team size (min 5): ");
         try {
             int size = Integer.parseInt(scan.nextLine());
-            if (size < 5) {
-                System.out.println("Must be >= 5.");
+            if (size <= 1) {
+                System.out.println("❌ Cannot form teams with team size " + size + ". Enter a value greater than 1.");
                 return;
             }
             teamSize = size;
