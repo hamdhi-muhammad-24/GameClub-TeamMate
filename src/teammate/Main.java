@@ -42,8 +42,13 @@ public class Main {
             switch (mainChoice) {
 
                 case "1":
+                    if (!organizerLogin(scanner)) {
+                        System.out.println("Returning to main menu...\n");
+                        break;
+                    }
                     organizerMenu(scanner, csv, builder);
                     break;
+
 
                 case "2":
                     surveyManager.startSurvey();
@@ -56,6 +61,30 @@ public class Main {
                 default:
                     System.out.println("Invalid choice! Enter 1, 2, or 3.");
             }
+        }
+    }
+
+    // =============================================================
+    // ORGANIZER LOGIN
+    // =============================================================
+    private static boolean organizerLogin(Scanner scanner) {
+
+        final String USERNAME = "admin";
+        final String PASSWORD = "1234";
+
+        System.out.println("\n--------- Organizer Login ---------");
+        System.out.print("Enter Username: ");
+        String u = scanner.nextLine().trim();
+
+        System.out.print("Enter Password: ");
+        String p = scanner.nextLine().trim();
+
+        if (u.equals(USERNAME) && p.equals(PASSWORD)) {
+            System.out.println("✔ Login Successful!\n");
+            return true;
+        } else {
+            System.out.println("❌ Invalid username or password!\n");
+            return false;
         }
     }
 
