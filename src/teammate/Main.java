@@ -254,7 +254,7 @@ public class Main {
     // SET TEAM SIZE
     // =============================================================
     private static void setTeamSize(Scanner scan) {
-        System.out.print("Enter team size (min 5): ");
+        System.out.print("Enter team size : ");
         try {
             int size = Integer.parseInt(scan.nextLine());
             if (size <= 1) {
