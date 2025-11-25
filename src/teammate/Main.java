@@ -51,8 +51,9 @@ public class Main {
 
 
                 case "2":
-                    surveyManager.startSurvey();
+                    participantMenu(scanner, surveyManager);
                     break;
+
 
                 case "3":
                     System.out.println("Goodbye!");
@@ -60,6 +61,41 @@ public class Main {
 
                 default:
                     System.out.println("Invalid choice! Enter 1, 2, or 3.");
+            }
+        }
+    }
+
+    // =============================================================
+    // PARTICIPANT MENU
+    // =============================================================
+    private static void participantMenu(Scanner scanner, ParticipantSurveyManager surveyManager) {
+
+        while (true) {
+            System.out.println("\n===============================");
+            System.out.println("        Participant Menu");
+            System.out.println("===============================");
+            System.out.println("1. Complete Survey");
+            System.out.println("2. Back to Main Menu");
+            System.out.println("3. Exit System");
+            System.out.print("Enter choice: ");
+
+            String choice = scanner.nextLine().trim();
+
+            switch (choice) {
+
+                case "1":
+                    surveyManager.startSurvey();
+                    break;
+
+                case "2":
+                    return; // go back to main menu
+
+                case "3":
+                    System.out.println("Exiting system...");
+                    System.exit(0); // FULL EXIT
+
+                default:
+                    System.out.println("Invalid choice!");
             }
         }
     }
@@ -109,6 +145,7 @@ public class Main {
             System.out.println("6. View UNASSIGNED Participants");
             System.out.println("7. Save All Teams to CSV");
             System.out.println("8. Back to Main Menu");
+            System.out.println("9. Exit System");
             System.out.print("Enter choice: ");
 
             String choice = scanner.nextLine().trim();
@@ -152,8 +189,13 @@ public class Main {
                 case "8":
                     return; // back to main menu
 
+                case "9":
+                    System.out.println("Exiting system...");
+                    System.exit(0);
+
                 default:
                     System.out.println("Enter a valid number!");
+
             }
         }
     }
