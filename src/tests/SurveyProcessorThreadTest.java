@@ -1,4 +1,4 @@
-package teammate.tests;
+package tests;
 
 import org.junit.jupiter.api.Test;
 import teammate.threads.SurveyProcessorThread;
