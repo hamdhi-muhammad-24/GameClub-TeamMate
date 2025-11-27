@@ -181,7 +181,7 @@ public class ParticipantSurveyManager {
     // ======================================================
     // CHECK IF EMAIL ALREADY EXISTS IN CSV
     // ======================================================
-    private boolean emailExists(String email) {
+    public boolean emailExists(String email) {
         try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
 
             br.readLine(); // skip header
@@ -291,7 +291,7 @@ public class ParticipantSurveyManager {
     // ======================================================
     // AUTO-GENERATE NEXT PARTICIPANT ID (P### FORMAT)
     // ======================================================
-    private String generateNextId() {
+    public String generateNextId() {
         int maxNumber = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
@@ -317,4 +317,6 @@ public class ParticipantSurveyManager {
 
         return "P" + (maxNumber + 1);
     }
-}
+
+//    public String generateTestNextIdForUnitTest() {
+    }

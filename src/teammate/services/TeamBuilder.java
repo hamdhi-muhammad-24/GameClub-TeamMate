@@ -50,7 +50,7 @@ public class TeamBuilder {
     // ============================================================
     // PART 1 — WELL-BALANCED TEAMS (STRICT)
     // ============================================================
-    private Map<String, Object> formWellBalancedTeams(List<Participant> participants, int teamSize) {
+    public Map<String, Object> formWellBalancedTeams(List<Participant> participants, int teamSize) {
 
         Map<String, Object> result = new HashMap<>();
         List<Participant> leftover = new ArrayList<>();
