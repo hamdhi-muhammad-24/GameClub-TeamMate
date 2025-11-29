@@ -157,13 +157,13 @@ public class ParticipantSurveyManager {
         // ================================
         // PERSONALITY SURVEY
         // ================================
-        System.out.println("\nRate each statement from 1 to 5\n");
+        System.out.println("\nRate each statement from 1 (Strongly Disagree) to 5 (Strongly Agree)\n");
 
-        int q1 = getNumberInput(sc, "Q1: ", 1, 5);
-        int q2 = getNumberInput(sc, "Q2: ", 1, 5);
-        int q3 = getNumberInput(sc, "Q3: ", 1, 5);
-        int q4 = getNumberInput(sc, "Q4: ", 1, 5);
-        int q5 = getNumberInput(sc, "Q5: ", 1, 5);
+        int q1 = getNumberInput(sc, "Q1. I enjoy taking the lead and guiding others during group activities.    : ", 1, 5);
+        int q2 = getNumberInput(sc, "Q2. I prefer analyzing situations and coming up with strategic solutions.  : ", 1, 5);
+        int q3 = getNumberInput(sc, "Q3. I work well with others and enjoy collaborative teamwork.              : ", 1, 5);
+        int q4 = getNumberInput(sc, "Q4. I am calm under pressure and can help maintain team morale.            : ", 1, 5);
+        int q5 = getNumberInput(sc, "Q5. I like making quick decisions and adapting in dynamic situations.      : ", 1, 5);
 
         int rawTotal = q1 + q2 + q3 + q4 + q5;
         int finalScore = rawTotal * 4;
@@ -173,6 +173,12 @@ public class ParticipantSurveyManager {
         if (finalScore >= 90) personalityType = "Leader";
         else if (finalScore >= 70) personalityType = "Balanced";
         else personalityType = "Thinker";
+
+        System.out.println("\n=========================================");
+        System.out.println(" Survey Completed!");
+        System.out.println(" Personality Score : " + finalScore);
+        System.out.println(" Personality Type  : " + personalityType);
+        System.out.println("=========================================\n");
 
         log.info("Personality classified as " + personalityType);
 
