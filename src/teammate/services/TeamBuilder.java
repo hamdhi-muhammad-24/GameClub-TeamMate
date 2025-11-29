@@ -2,10 +2,14 @@ package teammate.services;
 
 import teammate.models.Participant;
 import teammate.models.Team;
+import teammate.utils.LoggerUtil;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 public class TeamBuilder {
+
+    private static final Logger log = LoggerUtil.getLogger();
 
     private static final int MAX_PER_GAME = 2;
     private static final int MIN_ROLES = 3;
@@ -13,25 +17,33 @@ public class TeamBuilder {
     private static final int REQUIRED_LEADERS = 1;
 
     // ============================================================
-    // MAIN METHOD: Build ALL team categories
+    // MAIN METHOD — Build ALL team categories
     // ============================================================
     public Map<String, Object> formAllTeams(List<Participant> participants, int teamSize) {
+
+        log.info("Starting full team formation for " + participants.size() + " participants.");
 
         Map<String, Object> result = new HashMap<>();
 
         // ===============================
-        // STEP 1 — FORM WELL-BALANCED TEAMS
+        // STEP 1 — WELL-BALANCED TEAMS
         // ===============================
+        log.fine("Forming well-balanced teams...");
         Map<String, Object> balancedResult = formWellBalancedTeams(participants, teamSize);
 
         List<Team> wellBalanced = (List<Team>) balancedResult.get("teams");
         List<Participant> leftover = (List<Participant>) balancedResult.get("leftover");
 
+        log.info("Well-balanced teams formed: " + wellBalanced.size());
+        log.info("Leftover after strict phase: " + leftover.size());
+
         // ===============================
-        // STEP 2 — FORM SECONDARY TEAMS
-        // (Random grouping, flexible rules)
+        // STEP 2 — SECONDARY TEAMS
         // ===============================
+        log.fine("Forming secondary (relaxed-rules) teams...");
         List<Team> secondaryTeams = formSecondaryTeams(leftover, teamSize);
+
+        log.info("Secondary teams formed: " + secondaryTeams.size());
 
         // Remove secondary members from leftover
         removeUsedParticipants(leftover, secondaryTeams);
@@ -43,6 +55,8 @@ public class TeamBuilder {
         result.put("secondary", secondaryTeams);
         result.put("leftover", leftover);
 
+        log.info("Team formation completed.");
+
         return result;
     }
 
@@ -52,11 +66,13 @@ public class TeamBuilder {
     // ============================================================
     public Map<String, Object> formWellBalancedTeams(List<Participant> participants, int teamSize) {
 
+        log.fine("Starting strict balanced team formation...");
+
         Map<String, Object> result = new HashMap<>();
         List<Participant> leftover = new ArrayList<>();
-
         List<Team> teams = new ArrayList<>();
 
+        // Split participants by personality
         List<Participant> leaders = new ArrayList<>();
         List<Participant> thinkers = new ArrayList<>();
         List<Participant> balanced = new ArrayList<>();
@@ -69,6 +85,10 @@ public class TeamBuilder {
             }
         }
 
+        log.fine("Leaders: " + leaders.size() +
+                ", Thinkers: " + thinkers.size() +
+                ", Balanced: " + balanced.size());
+
         Collections.shuffle(leaders);
         Collections.shuffle(thinkers);
         Collections.shuffle(balanced);
@@ -76,12 +96,13 @@ public class TeamBuilder {
         int fullTeams = participants.size() / teamSize;
         for (int i = 0; i < fullTeams; i++) teams.add(new Team());
 
+        log.info("Number of possible full teams: " + fullTeams);
+
         // ---------------- LEADERS ----------------
         for (int i = 0; i < fullTeams; i++) {
             if (i < leaders.size()) teams.get(i).addMember(leaders.get(i));
         }
-        if (leaders.size() > fullTeams)
-            leftover.addAll(leaders.subList(fullTeams, leaders.size()));
+        if (leaders.size() > fullTeams) leftover.addAll(leaders.subList(fullTeams, leaders.size()));
 
         // ---------------- THINKERS ----------------
         for (int i = 0; i < fullTeams; i++) {
@@ -93,6 +114,7 @@ public class TeamBuilder {
             extraThinkers.addAll(thinkers.subList(fullTeams, thinkers.size()));
 
         Collections.shuffle(extraThinkers);
+
         for (Participant th : extraThinkers) {
             boolean placed = false;
             for (Team t : teams) {
@@ -127,6 +149,9 @@ public class TeamBuilder {
             }
         }
 
+        log.info("Strict balanced teams formed: " + teams.size());
+        log.info("Leftover after strict phase: " + leftover.size());
+
         result.put("teams", teams);
         result.put("leftover", leftover);
         return result;
@@ -134,11 +159,13 @@ public class TeamBuilder {
 
 
     // ============================================================
-    // PART 2 — SECONDARY TEAMS (Quick grouping, random)
+    // PART 2 — SECONDARY TEAMS (loose rules)
     // ============================================================
     private List<Team> formSecondaryTeams(List<Participant> leftover, int teamSize) {
-        List<Team> secondary = new ArrayList<>();
 
+        log.fine("Creating secondary teams...");
+
+        List<Team> secondary = new ArrayList<>();
         List<Participant> temp = new ArrayList<>(leftover);
         Collections.shuffle(temp);
 
@@ -147,12 +174,14 @@ public class TeamBuilder {
             secondary.add(new Team(teamMembers));
             temp.subList(0, teamSize).clear();
         }
+
+        log.fine("Secondary team formation complete. Count = " + secondary.size());
         return secondary;
     }
 
 
     // ============================================================
-    // VALID TEAM CHECK FOR WELL-BALANCED TEAMS
+    // VALID TEAM CHECK FOR WELL-BALANCED
     // ============================================================
     private Team findValidTeam(Participant p, List<Team> teams, int teamSize) {
 
@@ -179,11 +208,16 @@ public class TeamBuilder {
                 continue;
 
             int score = evaluateSkillFit(t, p);
+
             if (score < bestScore) {
                 bestScore = score;
                 best = t;
             }
         }
+
+        if (best == null)
+            log.fine("Participant " + p.getName() + " could not be placed in any balanced team.");
+
         return best;
     }
 
@@ -198,10 +232,14 @@ public class TeamBuilder {
     }
 
     private void enforceMinimumRoleDiversity(List<Team> teams, List<Participant> leftover, int teamSize) {
+
+        log.fine("Checking minimum role diversity...");
+
         for (Team t : teams) {
             if (t.getMembers().size() == teamSize) {
                 Set<String> roles = new HashSet<>();
                 for (Participant m : t.getMembers()) roles.add(m.getRole());
+
                 if (roles.size() < MIN_ROLES) {
 
                     Iterator<Participant> it = leftover.iterator();
@@ -255,5 +293,6 @@ public class TeamBuilder {
                 leftover.remove(p);
             }
         }
+        log.fine("Removed assigned participants from leftover.");
     }
 }

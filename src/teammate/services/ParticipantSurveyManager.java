@@ -1,18 +1,23 @@
 package teammate.services;
 
 import teammate.models.Participant;
+import teammate.utils.LoggerUtil;
 
 import java.io.*;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class ParticipantSurveyManager {
 
     private static final String CSV_PATH = "Resources/participants_sample.csv";
+    private static final Logger log = LoggerUtil.getLogger();
 
     // ======================================================
     // PUBLIC METHOD — Run Survey for a Participant
     // ======================================================
     public void startSurvey() {
+
+        log.info("Participant survey started.");
 
         Scanner sc = new Scanner(System.in);
 
@@ -20,14 +25,13 @@ public class ParticipantSurveyManager {
         System.out.println("     Participant Survey");
         System.out.println("===============================\n");
 
-        // ------------------------------------------------------
-        // AUTO-GENERATE NEXT ID
-        // ------------------------------------------------------
+        // AUTO-GENERATE ID
         String nextId = generateNextId();
         System.out.println("Assigned ID: " + nextId);
+        log.fine("Generated next participant ID: " + nextId);
 
         // ================================
-        // NAME VALIDATION (must not be empty)
+        // NAME VALIDATION
         // ================================
         String name = "";
         while (true) {
@@ -36,15 +40,15 @@ public class ParticipantSurveyManager {
 
             if (name.isEmpty()) {
                 System.out.println("❌ Name cannot be empty! Please enter your name.\n");
+                log.warning("User entered empty name. Requesting retry.");
                 continue;
             }
-
-            break; // valid
+            break;
         }
-
+        log.fine("Name entered: " + name);
 
         // ================================
-        // EMAIL VALIDATION + No duplicates
+        // EMAIL VALIDATION
         // ================================
         String email;
         while (true) {
@@ -53,19 +57,21 @@ public class ParticipantSurveyManager {
 
             if (!email.toLowerCase().endsWith("@university.edu")) {
                 System.out.println("❌ Invalid email! It must end with @university.edu\n");
+                log.warning("Invalid email format entered: " + email);
                 continue;
             }
 
             if (emailExists(email)) {
                 System.out.println("❌ This email is already registered! Try a different email.\n");
+                log.warning("Duplicate email detected: " + email);
                 continue;
             }
-
             break;
         }
+        log.fine("Email validated: " + email);
 
         // ================================
-        // PREFERRED GAME SELECTION (1–7)
+        // PREFERRED GAME SELECT
         // ================================
         String game = "";
         while (true) {
@@ -93,29 +99,30 @@ public class ParticipantSurveyManager {
                     while (true) {
                         System.out.print("Enter your game (cannot be empty): ");
                         game = sc.nextLine().trim();
-
                         if (game.isEmpty()) {
                             System.out.println("❌ Game name cannot be empty!\n");
+                            log.warning("User entered empty custom game name.");
                             continue;
                         }
-                        break;  // valid
+                        break;
                     }
                     break;
 
-
                 default:
                     System.out.println("Invalid choice! Please enter 1–7.\n");
+                    log.warning("Invalid game selection option: " + input);
                     continue;
             }
             break;
         }
+        log.fine("Game selected: " + game);
 
         // ================================
-        // PREFERRED ROLE SELECTION (1–5)
+        // ROLE SELECT
         // ================================
         String role = "";
-
         while (true) {
+
             System.out.println("\nChoose your Preferred Role:");
             System.out.println("1. Strategist");
             System.out.println("2. Attacker");
@@ -134,54 +141,55 @@ public class ParticipantSurveyManager {
                 case "5": role = "Coordinator"; break;
                 default:
                     System.out.println("❌ Invalid choice! Please enter 1–5.\n");
+                    log.warning("Invalid role selection: " + r);
                     continue;
             }
             break;
         }
+        log.fine("Role selected: " + role);
 
-
+        // ================================
+        // SKILL LEVEL INPUT
+        // ================================
         int skill = getNumberInput(sc, "Enter Skill Level (1–10): ", 1, 10);
+        log.fine("Skill level entered: " + skill);
 
-        // ------------------------------------------------------
-        // 5-QUESTION PERSONALITY SURVEY
-        // ------------------------------------------------------
-        System.out.println("\nRate each statement from 1 (Strongly Disagree) to 5 (Strongly Agree)\n");
+        // ================================
+        // PERSONALITY SURVEY
+        // ================================
+        System.out.println("\nRate each statement from 1 to 5\n");
 
-        int q1 = getNumberInput(sc, "Q1. I enjoy taking the lead and guiding others during group activities.    : ", 1, 5);
-        int q2 = getNumberInput(sc, "Q2. I prefer analyzing situations and coming up with strategic solutions.  : ", 1, 5);
-        int q3 = getNumberInput(sc, "Q3. I work well with others and enjoy collaborative teamwork.              : ", 1, 5);
-        int q4 = getNumberInput(sc, "Q4. I am calm under pressure and can help maintain team morale.            : ", 1, 5);
-        int q5 = getNumberInput(sc, "Q5. I like making quick decisions and adapting in dynamic situations.      : ", 1, 5);
+        int q1 = getNumberInput(sc, "Q1: ", 1, 5);
+        int q2 = getNumberInput(sc, "Q2: ", 1, 5);
+        int q3 = getNumberInput(sc, "Q3: ", 1, 5);
+        int q4 = getNumberInput(sc, "Q4: ", 1, 5);
+        int q5 = getNumberInput(sc, "Q5: ", 1, 5);
 
         int rawTotal = q1 + q2 + q3 + q4 + q5;
         int finalScore = rawTotal * 4;
+        log.fine("Personality score calculated: " + finalScore);
 
         String personalityType;
         if (finalScore >= 90) personalityType = "Leader";
         else if (finalScore >= 70) personalityType = "Balanced";
         else personalityType = "Thinker";
 
-        System.out.println("\n=========================================");
-        System.out.println(" Survey Completed!");
-        System.out.println(" Personality Score : " + finalScore);
-        System.out.println(" Personality Type  : " + personalityType);
-        System.out.println("=========================================\n");
+        log.info("Personality classified as " + personalityType);
 
-        // ------------------------------------------------------
-        // SAVE INTO CSV
-        // ------------------------------------------------------
+        // SAVE NEW PARTICIPANT
         appendToCSV(new Participant(
                 nextId, name, email, game, role, skill, finalScore, personalityType
         ));
+        log.info("Participant saved successfully: " + name);
 
         System.out.println("Your responses have been recorded successfully!");
     }
 
-
     // ======================================================
-    // CHECK IF EMAIL ALREADY EXISTS IN CSV
+    // CHECK IF EMAIL EXISTS
     // ======================================================
     public boolean emailExists(String email) {
+
         try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
 
             br.readLine(); // skip header
@@ -192,58 +200,41 @@ public class ParticipantSurveyManager {
 
                 String[] data = line.split(",");
                 if (data.length >= 3) {
-                    String existingEmail = data[2].trim();
-                    if (existingEmail.equalsIgnoreCase(email)) {
+                    if (data[2].trim().equalsIgnoreCase(email)) {
                         return true;
                     }
                 }
             }
 
         } catch (Exception e) {
-            System.out.println("Error checking email uniqueness: " + e.getMessage());
+            log.severe("Error checking email existence: " + e.getMessage());
         }
 
         return false;
     }
 
-
-
     // ======================================================
-    // APPEND NEW PARTICIPANT TO CSV (FIXED NEWLINE ISSUE)
+    // APPEND NEW PARTICIPANT TO CSV
     // ======================================================
     private void appendToCSV(Participant p) {
 
         try {
             File file = new File(CSV_PATH);
-
-            // Check the last character of the file
             boolean needsNewLine = false;
 
             if (file.length() > 0) {
                 FileInputStream fis = new FileInputStream(file);
-                int lastByte = -1;
-                int current;
-
-                while ((current = fis.read()) != -1) {
-                    lastByte = current;
-                }
+                int lastByte = -1, current;
+                while ((current = fis.read()) != -1) lastByte = current;
                 fis.close();
 
-                // ASCII 10 = '\n'
-                if (lastByte != '\n') {
-                    needsNewLine = true;
-                }
+                if (lastByte != '\n') needsNewLine = true;
             }
 
-            FileWriter fw = new FileWriter(CSV_PATH, true);
-            BufferedWriter bw = new BufferedWriter(fw);
+            BufferedWriter bw = new BufferedWriter(new FileWriter(CSV_PATH, true));
 
-            // Add missing newline if needed
-            if (needsNewLine) {
-                bw.newLine();
-            }
+            if (needsNewLine) bw.newLine();
 
-            // Write new participant
             bw.write(
                     p.getId() + "," +
                             p.getName() + "," +
@@ -255,15 +246,15 @@ public class ParticipantSurveyManager {
                             p.getPersonalityType()
             );
 
-            bw.newLine();  // ensure next append always goes to new line
+            bw.newLine();
             bw.close();
 
+            log.info("Participant appended to CSV: " + p.getId());
+
         } catch (IOException e) {
-            System.out.println("Error saving participant: " + e.getMessage());
+            log.severe("Error saving participant: " + e.getMessage());
         }
     }
-
-
 
     // ======================================================
     // SAFE NUMBER INPUT
@@ -277,19 +268,20 @@ public class ParticipantSurveyManager {
                 int n = Integer.parseInt(sc.nextLine());
                 if (n < min || n > max) {
                     System.out.println("Enter a value between " + min + " and " + max + ".");
+                    log.warning("Invalid number outside range: " + n);
                     continue;
                 }
                 return n;
 
             } catch (Exception e) {
                 System.out.println("Invalid number! Try again.");
+                log.warning("User entered invalid number format.");
             }
         }
     }
 
-
     // ======================================================
-    // AUTO-GENERATE NEXT PARTICIPANT ID (P### FORMAT)
+    // GENERATE NEXT ID
     // ======================================================
     public String generateNextId() {
         int maxNumber = 0;
@@ -312,11 +304,12 @@ public class ParticipantSurveyManager {
             }
 
         } catch (Exception e) {
-            System.out.println("Error reading ID: " + e.getMessage());
+            log.severe("Error reading last participant ID: " + e.getMessage());
         }
 
-        return "P" + (maxNumber + 1);
-    }
+        String newId = "P" + (maxNumber + 1);
+        log.fine("Next ID computed = " + newId);
 
-//    public String generateTestNextIdForUnitTest() {
+        return newId;
     }
+}

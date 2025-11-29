@@ -7,11 +7,15 @@ import teammate.services.TeamBuilder;
 import teammate.services.ParticipantSurveyManager;
 import teammate.threads.TeamBuilderThread;
 import teammate.threads.SurveyProcessorThread;
+import teammate.utils.LoggerUtil;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Main {
+
+    private static final Logger log = LoggerUtil.getLogger();
 
     private static List<Participant> participants = new ArrayList<>();
     private static List<Team> wellBalanced = new ArrayList<>();
@@ -21,6 +25,8 @@ public class Main {
     private static Integer teamSize = null;
 
     public static void main(String[] args) {
+
+        log.info("Application started.");
 
         Scanner scanner = new Scanner(System.in);
         CSVHandler csv = new CSVHandler();
@@ -38,28 +44,37 @@ public class Main {
             System.out.print("Enter choice: ");
 
             String mainChoice = scanner.nextLine().trim();
+            log.fine("Main menu choice = " + mainChoice);
 
             switch (mainChoice) {
 
                 case "1":
+                    log.info("Organizer selected.");
+
                     if (!organizerLogin(scanner)) {
+                        log.warning("Organizer login failed.");
                         System.out.println("Returning to main menu...\n");
                         break;
                     }
+
+                    log.info("Organizer login successful.");
                     organizerMenu(scanner, csv, builder);
                     break;
 
 
                 case "2":
+                    log.info("Participant selected.");
                     participantMenu(scanner, surveyManager);
                     break;
 
 
                 case "3":
+                    log.info("System exit chosen.");
                     System.out.println("Goodbye!");
                     return;
 
                 default:
+                    log.warning("Invalid main menu choice: " + mainChoice);
                     System.out.println("Invalid choice! Enter 1, 2, or 3.");
             }
         }
@@ -69,6 +84,8 @@ public class Main {
     // PARTICIPANT MENU
     // =============================================================
     private static void participantMenu(Scanner scanner, ParticipantSurveyManager surveyManager) {
+
+        log.info("Opening Participant Menu.");
 
         while (true) {
             System.out.println("\n===============================");
@@ -80,28 +97,33 @@ public class Main {
             System.out.print("Enter choice: ");
 
             String choice = scanner.nextLine().trim();
+            log.fine("Participant menu choice = " + choice);
 
             switch (choice) {
 
                 case "1":
+                    log.info("Participant started survey.");
                     surveyManager.startSurvey();
                     break;
 
                 case "2":
-                    return; // go back to main menu
+                    log.info("Returning to main menu from participant menu.");
+                    return;
 
                 case "3":
+                    log.severe("System exit triggered by participant.");
                     System.out.println("Exiting system...");
-                    System.exit(0); // FULL EXIT
+                    System.exit(0);
 
                 default:
+                    log.warning("Invalid participant menu choice: " + choice);
                     System.out.println("Invalid choice!");
             }
         }
     }
 
     // =============================================================
-    // ORGANIZER LOGIN (Case-insensitive username)
+    // ORGANIZER LOGIN
     // =============================================================
     private static boolean organizerLogin(Scanner scanner) {
 
@@ -116,21 +138,25 @@ public class Main {
         System.out.print("Enter Password: ");
         String p = scanner.nextLine().trim();
 
-        // username = case-insensitive
+        log.fine("Organizer attempted login with username: " + u);
+
         if (u.equalsIgnoreCase(USERNAME) && p.equals(PASSWORD)) {
+            log.info("Organizer login success.");
             System.out.println("✔ Login Successful!\n");
             return true;
         } else {
+            log.warning("Organizer login failed: wrong credentials.");
             System.out.println("❌ Invalid username or password!\n");
             return false;
         }
     }
 
-
     // =============================================================
     // ORGANIZER MENU
     // =============================================================
     private static void organizerMenu(Scanner scanner, CSVHandler csv, TeamBuilder builder) {
+
+        log.info("Opening Organizer Menu.");
 
         while (true) {
 
@@ -149,53 +175,63 @@ public class Main {
             System.out.print("Enter choice: ");
 
             String choice = scanner.nextLine().trim();
+            log.fine("Organizer menu choice = " + choice);
 
             switch (choice) {
 
                 case "1":
+                    log.info("Loading participants...");
                     loadParticipants(csv);
                     break;
 
                 case "2":
                     if (!checkParticipantsLoaded()) break;
+                    log.info("Viewing participants.");
                     viewParticipants();
                     break;
 
                 case "3":
+                    log.info("Setting team size.");
                     setTeamSize(scanner);
                     break;
 
                 case "4":
                     if (!checkParticipantsLoaded()) break;
                     if (!checkTeamSizeSet()) break;
+                    log.info("Running team formation.");
                     runTeamFormation(builder);
                     break;
 
                 case "5":
                     if (!checkTeamsFormed()) break;
+                    log.info("Viewing formed teams.");
                     viewFormedTeams(scanner);
                     break;
 
                 case "6":
                     if (!checkParticipantsLoaded()) break;
+                    log.info("Viewing unassigned participants.");
                     viewUnassigned();
                     break;
 
                 case "7":
                     if (!checkParticipantsLoaded()) break;
+                    log.info("Saving all teams.");
                     saveAll(csv);
                     break;
 
                 case "8":
-                    return; // back to main menu
+                    log.info("Back to main menu.");
+                    return;
 
                 case "9":
+                    log.severe("System exit triggered by organizer.");
                     System.out.println("Exiting system...");
                     System.exit(0);
 
                 default:
+                    log.warning("Invalid organizer menu choice: " + choice);
                     System.out.println("Enter a valid number!");
-
             }
         }
     }
@@ -206,8 +242,10 @@ public class Main {
     private static void loadParticipants(CSVHandler csv) {
         try {
             participants = csv.loadParticipants("Resources/participants_sample.csv");
+            log.info("Participants loaded: count = " + participants.size());
             System.out.println("Loaded " + participants.size() + " participants.");
         } catch (Exception e) {
+            log.severe("Error loading participants: " + e.getMessage());
             System.out.println("Error: " + e.getMessage());
         }
     }
@@ -217,6 +255,7 @@ public class Main {
     // =============================================================
     private static boolean checkParticipantsLoaded() {
         if (participants == null || participants.isEmpty()) {
+            log.warning("Participants NOT loaded.");
             System.out.println("❗ Please load participants first (Option 1).");
             return false;
         }
@@ -225,21 +264,23 @@ public class Main {
 
     private static boolean checkTeamSizeSet() {
         if (teamSize == null) {
+            log.warning("Team size NOT set.");
             System.out.println("❗ Please set team size first (Option 3).");
             return false;
         }
 
         if (teamSize <= 1) {
+            log.warning("Invalid team size: " + teamSize);
             System.out.println("❗ Invalid team size. Please set a value greater than 1.");
             return false;
         }
 
         return true;
-
     }
 
     private static boolean checkTeamsFormed() {
         if (wellBalanced.isEmpty() && secondary.isEmpty()) {
+            log.warning("Teams not formed yet.");
             System.out.println("❗ Please run team formation first (Option 4).");
             return false;
         }
@@ -247,9 +288,11 @@ public class Main {
     }
 
     // =============================================================
-    // VIEW PARTICIPANTS + PAGINATION
+    // VIEW PARTICIPANTS
     // =============================================================
     private static void viewParticipants() {
+
+        log.info("Opening participant viewer.");
 
         Scanner scanner = new Scanner(System.in);
 
@@ -262,8 +305,11 @@ public class Main {
             System.out.print("Enter your choice: ");
 
             String choice = scanner.nextLine().trim();
+            log.fine("View participants choice = " + choice);
 
             if (choice.equals("1")) {
+
+                log.info("Displaying ALL participants.");
 
                 System.out.println("\n===== ALL PARTICIPANTS =====\n");
                 for (int i = 0; i < participants.size(); i++) {
@@ -276,6 +322,8 @@ public class Main {
             }
 
             else if (choice.equals("2")) {
+
+                log.info("Displaying participants 10-by-10.");
 
                 int index = 0;
 
@@ -295,6 +343,7 @@ public class Main {
                     System.out.print("Enter: ");
 
                     String nav = scanner.nextLine().trim().toUpperCase();
+                    log.fine("Participant list navigation: " + nav);
 
                     if (nav.equals("Q")) break;
 
@@ -319,8 +368,10 @@ public class Main {
             else if (choice.equals("3"))
                 return;
 
-            else
+            else {
+                log.warning("Invalid participants viewer choice: " + choice);
                 System.out.println("Invalid choice!");
+            }
         }
     }
 
@@ -332,12 +383,15 @@ public class Main {
         try {
             int size = Integer.parseInt(scan.nextLine());
             if (size <= 1) {
+                log.warning("Attempted to set invalid team size = " + size);
                 System.out.println("❌ Cannot form teams with team size " + size + ". Enter a value greater than 1.");
                 return;
             }
             teamSize = size;
+            log.info("Team size set to " + size);
             System.out.println("Team size updated.");
         } catch (Exception e) {
+            log.severe("Invalid input for team size: " + e.getMessage());
             System.out.println("Invalid number!");
         }
     }
@@ -347,18 +401,28 @@ public class Main {
     // =============================================================
     private static void runTeamFormation(TeamBuilder builder) {
 
+        log.info("Starting team formation...");
+
         try {
             SurveyProcessorThread t1 = new SurveyProcessorThread(participants);
             t1.start();
             t1.join();
 
+            log.info("Survey processing thread completed.");
+
             TeamBuilderThread t2 = new TeamBuilderThread(participants, teamSize, builder);
             t2.start();
             t2.join();
 
+            log.info("Team building thread completed.");
+
             wellBalanced = t2.getWellBalancedTeams();
             secondary = t2.getSecondaryTeams();
             leftover = t2.getLeftover();
+
+            log.info("Well-balanced teams = " + wellBalanced.size());
+            log.info("Secondary teams = " + secondary.size());
+            log.info("Leftover count = " + leftover.size());
 
             System.out.println("\nFormation Completed!");
             System.out.println("Well-Balanced Teams: " + wellBalanced.size());
@@ -366,14 +430,17 @@ public class Main {
             System.out.println("Unassigned        : " + leftover.size());
 
         } catch (Exception e) {
+            log.severe("Team formation error: " + e.getMessage());
             System.out.println("Error: " + e.getMessage());
         }
     }
 
     // =============================================================
-    // FORMED TEAMS SUB-MENU
+    // VIEW FORMED TEAMS
     // =============================================================
     private static void viewFormedTeams(Scanner scanner) {
+
+        log.info("Viewing formed teams.");
 
         while (true) {
             System.out.println("\n========== VIEW FORMED TEAMS ==========");
@@ -384,20 +451,26 @@ public class Main {
             System.out.print("Enter choice: ");
 
             String c = scanner.nextLine();
+            log.fine("Formed team choice = " + c);
 
             switch (c) {
                 case "1": viewAllTeams(); break;
                 case "2": viewWellBalanced(); break;
                 case "3": viewSecondary(); break;
                 case "4": return;
-                default: System.out.println("Invalid choice.");
+                default:
+                    log.warning("Invalid formed-team option: " + c);
+                    System.out.println("Invalid choice.");
             }
         }
     }
 
     private static void viewAllTeams() {
 
+        log.info("Displaying all teams.");
+
         if (wellBalanced.isEmpty() && secondary.isEmpty()) {
+            log.warning("No teams available to display.");
             System.out.println("No teams formed.");
             return;
         }
@@ -420,7 +493,10 @@ public class Main {
 
     private static void viewWellBalanced() {
 
+        log.info("Viewing well-balanced teams.");
+
         if (wellBalanced.isEmpty()) {
+            log.warning("No well-balanced teams.");
             System.out.println("No well-balanced teams.");
             return;
         }
@@ -434,7 +510,10 @@ public class Main {
 
     private static void viewSecondary() {
 
+        log.info("Viewing secondary teams.");
+
         if (secondary.isEmpty()) {
+            log.warning("No secondary teams.");
             System.out.println("No secondary teams.");
             return;
         }
@@ -451,7 +530,10 @@ public class Main {
     // =============================================================
     private static void viewUnassigned() {
 
+        log.info("Viewing unassigned participants.");
+
         if (leftover.isEmpty()) {
+            log.info("No unassigned participants.");
             System.out.println("No unassigned participants.");
             return;
         }
@@ -466,8 +548,10 @@ public class Main {
     private static void saveAll(CSVHandler csv) {
         try {
             csv.saveAllTeams(wellBalanced, secondary, leftover, "Resources/all_teams_output.csv");
+            log.info("Teams saved to Resources/all_teams_output.csv");
             System.out.println("Saved to Resources/all_teams_output.csv");
         } catch (IOException e) {
+            log.severe("Error saving teams: " + e.getMessage());
             System.out.println("Save error: " + e.getMessage());
         }
     }
