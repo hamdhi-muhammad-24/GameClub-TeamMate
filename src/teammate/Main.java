@@ -269,9 +269,9 @@ public class Main {
             return false;
         }
 
-        if (teamSize <= 1) {
+        if (teamSize <= 3) {
             log.warning("Invalid team size: " + teamSize);
-            System.out.println("❗ Invalid team size. Please set a value greater than 1.");
+            System.out.println("❗ Invalid team size. Minimum allowed is 4.");
             return false;
         }
 
@@ -382,9 +382,9 @@ public class Main {
         System.out.print("Enter team size : ");
         try {
             int size = Integer.parseInt(scan.nextLine());
-            if (size <= 1) {
+            if (size <= 3) {
                 log.warning("Attempted to set invalid team size = " + size);
-                System.out.println("❌ Cannot form teams with team size " + size + ". Enter a value greater than 1.");
+                System.out.println("❌ Cannot form teams with team size " + size + ". (Enter a value greater than 3).");
                 return;
             }
             teamSize = size;
